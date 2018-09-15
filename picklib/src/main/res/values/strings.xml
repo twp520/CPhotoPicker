@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">picklib</string>
+    <string name="picker_done">%1$d / %2$d</string>
+</resources>
