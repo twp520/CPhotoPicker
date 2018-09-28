@@ -7,7 +7,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
-import android.text.TextUtils
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -18,6 +17,7 @@ import android.widget.Toast
 import com.chad.library.adapter.base.BaseQuickAdapter.ALPHAIN
 import com.tbruyelle.rxpermissions2.RxPermissions
 import kotlinx.android.synthetic.main.activity_image_picke.*
+import java.io.File
 
 
 class ImagePickerAct : AppCompatActivity(), AdapterView.OnItemSelectedListener {
@@ -26,7 +26,9 @@ class ImagePickerAct : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     private var spinnerAdapter: ArrayAdapter<Album>? = null
     private lateinit var scanner: ImageScanner
     private var maxChecked = 9
-    private var needCrop = false
+    private var needCrop = false //是否需要裁剪
+    private var singleModel = false
+    private var permission: RxPermissions? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,14 +36,14 @@ class ImagePickerAct : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         window.statusBarColor = ContextCompat.getColor(this, R.color.colorPrimary)
         maxChecked = intent.getIntExtra("maxCount", 9)
         needCrop = intent.getBooleanExtra("needCrop", false)
-
+        singleModel = intent.getBooleanExtra("single", false)
 
         initToolbar()
         initImageList()
-        scanner = ImageScanner(contentResolver)
-        val permission = RxPermissions(this)
-        permission.request(Manifest.permission.READ_EXTERNAL_STORAGE)
-                .subscribe { hasPermission ->
+        scanner = ImageScanner(this)
+        permission = RxPermissions(this)
+        permission?.request(Manifest.permission.READ_EXTERNAL_STORAGE)
+                ?.subscribe { hasPermission ->
                     if (hasPermission) {
                         scanImage()
                     }
@@ -94,26 +96,40 @@ class ImagePickerAct : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                 bundle.putString("path", item.imagePath)
                 jumpActivity(LargeActivity::class.java, bundle)
             } else if (item.getItemType() == 1 && item is ImageTakePhoto) {
-                //TODO 拍照，并接受拍照结果，并设置为 Image 类型回传给调用者
-                takePhoto()
+                //拍照，并接受拍照结果，并设置为 Image 类型回传给调用者
+                permission?.request(Manifest.permission.CAMERA)
+                        ?.subscribe {
+                            if (it) takePhoto()
+                        }
             }
         }
         mAdapter?.setOnItemChildClickListener { _, view, position ->
-            when (view.id) {
-                R.id.item_picker_ckb -> {
-                    if (maxChecked == 0) {
-                        return@setOnItemChildClickListener
+            handItemClick(view, position)
+        }
+    }
+
+    private fun handItemClick(view: View, position: Int) {
+        if (view.id == R.id.item_picker_ckb) {
+            if (maxChecked == 0) {
+                return
+            }
+            val item = mAdapter!!.data[position]
+            if (item is Image) {
+                if (singleModel) {//判断是否是单选模式
+                    //单选状态下，选择一张就回传，如果需要裁剪
+                    if (needCrop) {
+                        handleCropIntent(scanner.getUriFromFile(this, File(item.imageFile)))
+                    } else {
+                        setListResult(arrayListOf(item))
                     }
-                    val item = mAdapter!!.data[position]
-                    if (item is Image) {
-                        item.isChecked = !item.isChecked
-                        mAdapter?.notifyItemChanged(position)
-                        mAdapter?.checkedInAll(item)
-                        //改变按钮上的数字加
-                        picker_tv_count.text = getString(R.string.picker_done,
-                                mAdapter?.getCheckedCount()
-                                        ?: 0, maxChecked)
-                    }
+                } else {
+                    item.isChecked = !item.isChecked
+                    mAdapter?.notifyItemChanged(position)
+                    mAdapter?.checkedInAll(item)
+                    //改变按钮上的数字加
+                    picker_tv_count.text = getString(R.string.picker_done,
+                            mAdapter?.getCheckedCount()
+                                    ?: 0, maxChecked)
                 }
             }
         }
@@ -130,37 +146,42 @@ class ImagePickerAct : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         startActivityForResult(captureIntent, 100)
     }
 
+    /**
+     * 去裁剪
+     * @param imageUri 图片uri
+     */
     private fun handleCropIntent(imageUri: Uri) {
         val outUri = Uri.parse(scanner.generateCropFilePath())
         val cropIntent = scanner.getCropIntent(imageUri, outUri)
         startActivityForResult(cropIntent, 200)
     }
 
+    /**
+     * 拍照成功
+     * @param path 最终图片路径
+     */
     private fun takePhotoResultSuccess(path: String) {
         val photo = Image(0)
         photo.isChecked = false
         photo.imageFile = path
         photo.imagePath = "file:///$path"
-        val intent = Intent()
-        intent.putParcelableArrayListExtra("images", arrayListOf(photo))
-        setResult(Activity.RESULT_OK, intent)
-        finish()
+        setListResult(arrayListOf(photo))
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == 100 && resultCode == Activity.RESULT_OK) {
             //拍照成功
-            val photoPath = scanner.generateCameraFilePath()
-            if (TextUtils.isEmpty(photoPath)) {
-                Toast.makeText(this, "Please check if the storage space is sufficient", Toast.LENGTH_LONG).show()
-                return
-            }
+            /* val photoPath = scanner.generateCameraFile()?.absolutePath
+             if (TextUtils.isEmpty(photoPath)) {
+                 Toast.makeText(this, "Please check if the storage space is sufficient", Toast.LENGTH_LONG).show()
+                 return
+             }*/
             if (needCrop) {//去裁剪
                 val file = scanner.generateCameraFile() ?: return
                 handleCropIntent(scanner.getUriFromFile(this, file))
             } else {
                 //不需要裁剪，直接返回
-                takePhotoResultSuccess(scanner.generateCameraFilePath())
+                takePhotoResultSuccess(scanner.generateCameraFile()?.absolutePath ?: "")
             }
         } else if (requestCode == 200 && resultCode == Activity.RESULT_OK) {
             //裁剪成功
@@ -195,11 +216,15 @@ class ImagePickerAct : AppCompatActivity(), AdapterView.OnItemSelectedListener {
             finish()
             return true
         }
+        setListResult(result)
+        return true
+    }
+
+    private fun setListResult(result: ArrayList<Image>) {
         val intent = Intent()
         intent.putParcelableArrayListExtra("images", result)
         setResult(Activity.RESULT_OK, intent)
         finish()
-        return true
     }
 
 }

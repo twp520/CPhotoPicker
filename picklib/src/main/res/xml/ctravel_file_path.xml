@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <external-path name="cpp_external_path" path="."/>
+    <external-path
+        name="cpp_external_path"
+        path="." />
+    <cache-path
+        name="cpp_private_cache"
+        path="." />
+    <external-cache-path
+        name="cpp_external_cache"
+        path="." />
 </paths>

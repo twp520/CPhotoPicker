@@ -2,94 +2,74 @@ package com.colin.picklib
 
 import android.app.Activity
 import android.content.Intent
-import android.support.annotation.ColorRes
 import android.support.v4.app.Fragment
 
 /**
  *create by colin 2018/9/14
  */
-class ImagePicker {
-
-    private var activity: Activity? = null
-    private var fragment: Fragment? = null
-    private var requestCode = -1
-    private var colorRes: Int = -1
-    private var maxCount: Int = 9
-    private var needCrop: Boolean = false
-
-    constructor(activity: Activity, requestCode: Int, @ColorRes colorRes: Int, maxCount: Int = 9, needCrop: Boolean = false) {
-        this.activity = activity
-        this.requestCode = requestCode
-        this.colorRes = colorRes
-        this.maxCount = maxCount
-        this.needCrop = needCrop
-    }
-
-    constructor(fragment: Fragment, requestCode: Int, @ColorRes colorRes: Int, maxCount: Int = 9, needCrop: Boolean = false) {
-        this.fragment = fragment
-        this.requestCode = requestCode
-        this.colorRes = colorRes
-        this.maxCount = maxCount
-        this.needCrop = needCrop
-    }
+class ImagePicker private constructor(var parameters: PickParameters) {
 
     fun start() {
-        if (activity != null) {
-            val intent = Intent(activity, ImagePickerAct::class.java)
-            intent.putExtra("maxCount", this.maxCount)
-            intent.putExtra("needCrop", this.needCrop)
-            if (colorRes != -1) {
-                intent.putExtra("color", colorRes)
-            }
-            activity?.startActivityForResult(intent, requestCode)
-            return
+        val intent = if (parameters.activity != null) {
+            Intent(parameters.activity, ImagePickerAct::class.java)
+        } else {
+            Intent(parameters.fragment?.activity, ImagePickerAct::class.java)
         }
-
-        if (fragment != null) {
-            val intent = Intent(fragment?.activity, ImagePickerAct::class.java)
-            intent.putExtra("maxCount", this.maxCount)
-            intent.putExtra("needCrop", this.needCrop)
-            if (colorRes != -1) {
-                intent.putExtra("color", colorRes)
-            }
-            fragment?.startActivityForResult(intent, requestCode)
-            return
+        intent.putExtra("maxCount", parameters.maxCount)
+        intent.putExtra("needCrop", parameters.needCrop)
+        intent.putExtra("single", parameters.singleModel)
+        if (parameters.colorRes != -1) {
+            intent.putExtra("color", parameters.colorRes)
         }
-
-        throw NullPointerException("没有启动选项")
+        when {
+            parameters.activity != null -> parameters.activity?.startActivityForResult(intent, parameters.requestCode)
+            parameters.fragment != null -> parameters.fragment?.startActivityForResult(intent, parameters.requestCode)
+            else -> {
+                throw NullPointerException("没有启动项")
+            }
+        }
     }
 
+    private data class PickParameters(var id: Int) {
+        var activity: Activity? = null
+        var fragment: Fragment? = null
+        var requestCode = -1
+        var colorRes: Int = -1
+        var maxCount: Int = 9
+        var needCrop: Boolean = false
+        var singleModel: Boolean = false
+    }
 
     class Builder {
-        private var activity: Activity? = null
-        private var fragment: Fragment? = null
-        private var requestCode = -1
-        private var colorRes: Int = -1
-        private var maxCount: Int = 9
-        private var needCrop: Boolean = false
+        private var mParameter: PickParameters = PickParameters(0)
 
         fun with(activity: Activity): Builder {
-            this.activity = activity
+            mParameter.activity = activity
             return this
         }
 
         fun with(fragment: Fragment): Builder {
-            this.fragment = fragment
+            mParameter.fragment = fragment
             return this
         }
 
         fun requestCode(requestCode: Int): Builder {
-            this.requestCode = requestCode
+            mParameter.requestCode = requestCode
             return this
         }
 
         fun maxCount(maxCount: Int): Builder {
-            this.maxCount = maxCount
+            mParameter.maxCount = maxCount
             return this
         }
 
         fun needCrop(needCrop: Boolean): Builder {
-            this.needCrop = needCrop
+            mParameter.needCrop = needCrop
+            return this
+        }
+
+        fun isSingleModel(isSingle: Boolean): Builder {
+            mParameter.singleModel = isSingle
             return this
         }
 
@@ -99,11 +79,13 @@ class ImagePicker {
         }*/
 
         fun build(): ImagePicker {
-            return if (activity != null) {
-                ImagePicker(activity!!, requestCode, colorRes, maxCount, needCrop)
-            } else {
-                ImagePicker(fragment!!, requestCode, colorRes, maxCount, needCrop)
+            if (mParameter.activity == null && mParameter.fragment == null) {
+                throw NullPointerException("没有启动项，请先调用with方法")
             }
+            if (mParameter.requestCode == 0) {
+                throw NullPointerException("请调用requestCode方法指定code")
+            }
+            return ImagePicker(mParameter)
         }
     }
 }

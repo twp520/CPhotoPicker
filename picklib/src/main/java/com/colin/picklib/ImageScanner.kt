@@ -2,14 +2,13 @@ package com.colin.picklib
 
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
-import android.content.ContentResolver
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.provider.MediaStore
 import android.support.v4.content.FileProvider
 import java.io.File
@@ -38,8 +37,6 @@ private const val DATA = 3
 //大小阈值
 private const val ALBUM_SELECTION = "_size> 20000"
 
-val photoCompressDirPath = Environment.getExternalStorageDirectory().absolutePath + "/CPhotoPickerCache"
-
 fun Context.jumpActivity(clazz: Class<*>, args: Bundle? = null) {
     val intent = Intent(this, clazz)
     args?.let {
@@ -49,14 +46,14 @@ fun Context.jumpActivity(clazz: Class<*>, args: Bundle? = null) {
 }
 
 
-class ImageScanner(private var mContentResolver: ContentResolver) {
+class ImageScanner(var contextWrapper: ContextWrapper) {
 
     fun getImageAlbum(): LiveData<MutableList<Album>> {
         val liveData = MutableLiveData<MutableList<Album>>()
         Thread {
             val albumList = mutableListOf<Album>()
             val albumKes: HashSet<String> = hashSetOf()
-            val cursor = mContentResolver.query(EXTERNAL_IMAGES_URI,
+            val cursor = contextWrapper.contentResolver.query(EXTERNAL_IMAGES_URI,
                     ALBUM_PROJECTION, ALBUM_SELECTION, null, null)
             val allAlbum = Album("所有图片")
             albumList.add(allAlbum)
@@ -118,21 +115,26 @@ class ImageScanner(private var mContentResolver: ContentResolver) {
         return intent
     }
 
-    fun generateCameraFilePath(): String {
-        return android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DCIM)
-                .absolutePath + "/JPEG_CTravel_head.jpg"
-    }
+    /*fun generateCameraFilePath(): String {
+        val cacheFile = File(contextWrapper.cacheDir, "JPEG_CPicker_cameraPhoto.jpg")
+        Log.e("twp","cameraFileAbsolutePath = ${cacheFile.absolutePath}")
+        Log.e("twp","cameraFilePath = ${cacheFile.path}")
+        return cacheFile.absolutePath
+    }*/
 
     fun generateCameraFile(): File? {
-        return File(generateCameraFilePath())
+        // 路径： /data/user/0/packageName/cache/fileName
+        return File(contextWrapper.externalCacheDir, "JPEG_CPicker_cameraPhoto.jpg")
     }
 
     fun generateCropFilePath(): String {
-        return "file:///$photoCompressDirPath/JPEG_CTravel_head_crop.jpg"
+        val cf = File(contextWrapper.externalCacheDir, "JPEG_CPicker_cameraPhoto_crop.jpg")
+        return "file:///${cf.absolutePath}"
     }
 
     fun getCropFilePath(): String {
-        return "$photoCompressDirPath/JPEG_CTravel_head_crop.jpg"
+        val cf = File(contextWrapper.externalCacheDir, "JPEG_CPicker_cameraPhoto_crop.jpg")
+        return cf.absolutePath
     }
 
     fun getUriFromFile(context: Context, file: File): Uri {

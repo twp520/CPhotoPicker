@@ -18,11 +18,13 @@ class MainActivity : AppCompatActivity() {
 
     fun test(view: View) {
         ImagePicker.Builder().with(this)
-                .maxCount(9)
                 .requestCode(200)
-                .needCrop(false)
+                .maxCount(9)
+                .isSingleModel(true)
+                .needCrop(true)
                 .build()
                 .start()
+
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
