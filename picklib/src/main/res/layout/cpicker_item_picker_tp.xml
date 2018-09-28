@@ -5,6 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="120dp"
     android:layout_margin="3dp"
-    android:background="@drawable/ripple_btn"
+    android:background="@drawable/cpicker_ripple_btn"
     android:contentDescription="@string/app_name"
-    android:src="@drawable/icon_camera" />
+    android:src="@drawable/cpicker_icon_camera" />

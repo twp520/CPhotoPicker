@@ -16,7 +16,7 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import com.chad.library.adapter.base.BaseQuickAdapter.ALPHAIN
 import com.tbruyelle.rxpermissions2.RxPermissions
-import kotlinx.android.synthetic.main.activity_image_picke.*
+import kotlinx.android.synthetic.main.cpicker_activity_image_picke.*
 import java.io.File
 
 
@@ -32,7 +32,7 @@ class ImagePickerAct : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_image_picke)
+        setContentView(R.layout.cpicker_activity_image_picke)
         window.statusBarColor = ContextCompat.getColor(this, R.color.colorPrimary)
         maxChecked = intent.getIntExtra("maxCount", 9)
         needCrop = intent.getBooleanExtra("needCrop", false)
@@ -81,7 +81,7 @@ class ImagePickerAct : AppCompatActivity(), AdapterView.OnItemSelectedListener {
     }
 
     private fun initSpinner(albumList: MutableList<Album>) {
-        spinnerAdapter = ArrayAdapter(this, R.layout.layout_spinner_withe, albumList)
+        spinnerAdapter = ArrayAdapter(this, R.layout.cpicker_layout_spinner_withe, albumList)
         spinnerAdapter?.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         picker_spinner.adapter = spinnerAdapter
         picker_spinner.onItemSelectedListener = this
@@ -203,7 +203,7 @@ class ImagePickerAct : AppCompatActivity(), AdapterView.OnItemSelectedListener {
 
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.menu_picker, menu)
+        menuInflater.inflate(R.menu.cpicker_menu_picker, menu)
         return true
     }
 

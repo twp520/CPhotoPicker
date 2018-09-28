@@ -5,7 +5,7 @@ import com.chad.library.adapter.base.provider.BaseItemProvider
 
 class TakePhotoProvider : BaseItemProvider<ImageTakePhoto, BaseViewHolder>() {
     override fun layout(): Int {
-        return R.layout.item_picker_tp
+        return R.layout.cpicker_item_picker_tp
     }
 
     override fun viewType(): Int {

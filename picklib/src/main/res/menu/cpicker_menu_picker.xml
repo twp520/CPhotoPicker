@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/menu_picker_done"
-        android:icon="@drawable/icon_done"
+        android:icon="@drawable/cpicker_icon_done"
         android:title=""
         app:showAsAction="always" />
 </menu>
