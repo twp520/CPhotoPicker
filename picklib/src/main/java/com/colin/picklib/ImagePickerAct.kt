@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.GridLayoutManager
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -67,6 +68,7 @@ class ImagePickerAct : AppCompatActivity(), AdapterView.OnItemSelectedListener {
         mAdapter = ImageAdapterM(mutableListOf())
         mAdapter?.addData(ImageTakePhoto())
         mAdapter?.openLoadAnimation(ALPHAIN)
+        picker_list.layoutManager = GridLayoutManager(this, 3)
         picker_list.adapter = mAdapter
         picker_list.addItemDecoration(GalleryItemDecoration(this, 2, 2, 2, 2))
     }
