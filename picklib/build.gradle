@@ -10,6 +10,14 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    signingConfigs {
+        release {
+            keyAlias 'colinalias'
+            keyPassword '123456'
+            storeFile file('colin.jks')
+            storePassword '123456'
+        }
+    }
 
     buildTypes {
         release {
