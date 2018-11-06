@@ -139,7 +139,7 @@ class ImageScanner(var contextWrapper: ContextWrapper) {
 
     fun getUriFromFile(context: Context, file: File): Uri {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-            FileProvider.getUriForFile(context, "com.colin.cpp.FileProvider", file)
+            FileProvider.getUriForFile(context, context.packageName + ".colin.cpp.FileProvider", file)
         else
             Uri.fromFile(file)
     }

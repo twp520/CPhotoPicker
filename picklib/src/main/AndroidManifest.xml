@@ -10,7 +10,7 @@
     <application>
         <provider
             android:name=".CFileProvider"
-            android:authorities="com.colin.cpp.FileProvider"
+            android:authorities="${applicationId}.colin.cpp.FileProvider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

@@ -125,13 +125,23 @@ class ImagePickerAct : AppCompatActivity(), AdapterView.OnItemSelectedListener {
                         setListResult(arrayListOf(item))
                     }
                 } else {
-                    item.isChecked = !item.isChecked
-                    mAdapter?.notifyItemChanged(position)
-                    mAdapter?.checkedInAll(item)
-                    //改变按钮上的数字加
-                    picker_tv_count.text = getString(R.string.picker_done,
-                            mAdapter?.getCheckedCount()
-                                    ?: 0, maxChecked)
+                    val checked = mAdapter?.getCheckedCount() ?: 0
+                    if (checked < maxChecked) {
+                        item.isChecked = !item.isChecked
+                        mAdapter?.notifyItemChanged(position)
+                        mAdapter?.checkedInAll(item)
+                        //改变按钮上的数字加
+                        picker_tv_count.text = getString(R.string.picker_done, mAdapter?.getCheckedCount()
+                                ?: 0, maxChecked)
+                    } else {
+                        val result = mAdapter?.getCheckedImage()
+                        if (result == null || result.isEmpty()) {
+                            setResult(Activity.RESULT_CANCELED)
+                            finish()
+                            return
+                        }
+                        setListResult(result)
+                    }
                 }
             }
         }
