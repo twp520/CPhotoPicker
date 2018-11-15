@@ -2,25 +2,24 @@ package com.colin.picklib
 
 import android.app.Activity
 import android.content.Intent
+import android.os.Parcel
+import android.os.Parcelable
 import android.support.v4.app.Fragment
 
 /**
  *create by colin 2018/9/14
  */
-class ImagePicker private constructor(var parameters: PickParameters) {
+class ImagePicker private constructor(private var parameters: PickParameters) {
 
     fun start() {
+        if (parameters.activity == null && parameters.fragment == null)
+            return
         val intent = if (parameters.activity != null) {
             Intent(parameters.activity, ImagePickerAct::class.java)
         } else {
             Intent(parameters.fragment?.activity, ImagePickerAct::class.java)
         }
-        intent.putExtra("maxCount", parameters.maxCount)
-        intent.putExtra("needCrop", parameters.needCrop)
-        intent.putExtra("single", parameters.singleModel)
-        if (parameters.colorRes != -1) {
-            intent.putExtra("color", parameters.colorRes)
-        }
+        intent.putExtra("parameter", parameters)
         when {
             parameters.activity != null -> parameters.activity?.startActivityForResult(intent, parameters.requestCode)
             parameters.fragment != null -> parameters.fragment?.startActivityForResult(intent, parameters.requestCode)
@@ -30,14 +29,49 @@ class ImagePicker private constructor(var parameters: PickParameters) {
         }
     }
 
-    private data class PickParameters(var id: Int) {
+    data class PickParameters(var id: Int) : Parcelable {
         var activity: Activity? = null
         var fragment: Fragment? = null
         var requestCode = -1
-        var colorRes: Int = -1
+        //        var colorRes: Int = -1
         var maxCount: Int = 9
         var needCrop: Boolean = false
         var singleModel: Boolean = false
+        var needLarge: Boolean = true
+
+        constructor(parcel: Parcel) : this(parcel.readInt()) {
+//            activity = parcel.
+            requestCode = parcel.readInt()
+//            colorRes = parcel.readInt()
+            maxCount = parcel.readInt()
+            needCrop = parcel.readByte() != 0.toByte()
+            singleModel = parcel.readByte() != 0.toByte()
+            needLarge = parcel.readByte() != 0.toByte()
+        }
+
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            parcel.writeInt(id)
+            parcel.writeInt(requestCode)
+//            parcel.writeInt(colorRes)
+            parcel.writeInt(maxCount)
+            parcel.writeByte(if (needCrop) 1 else 0)
+            parcel.writeByte(if (singleModel) 1 else 0)
+            parcel.writeByte(if (needLarge) 1 else 0)
+        }
+
+        override fun describeContents(): Int {
+            return 0
+        }
+
+        companion object CREATOR : Parcelable.Creator<PickParameters> {
+            override fun createFromParcel(parcel: Parcel): PickParameters {
+                return PickParameters(parcel)
+            }
+
+            override fun newArray(size: Int): Array<PickParameters?> {
+                return arrayOfNulls(size)
+            }
+        }
     }
 
     class Builder {
@@ -73,10 +107,10 @@ class ImagePicker private constructor(var parameters: PickParameters) {
             return this
         }
 
-        /*fun themColor(colorRes: Int): Builder {
-            this.colorRes = colorRes
+        fun needLarge(needLarge: Boolean): Builder {
+            mParameter.needLarge = needLarge
             return this
-        }*/
+        }
 
         fun build(): ImagePicker {
             if (mParameter.activity == null && mParameter.fragment == null) {

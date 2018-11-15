@@ -43,6 +43,13 @@ class ImageAdapterM(data: MutableList<MyItemType>) : MultipleItemRvAdapter<MyIte
         }
     }
 
+    fun clear() {
+        mAllAlbum?.images?.forEach {
+            it.isChecked = false
+        }
+        notifyDataSetChanged()
+    }
+
     fun getCheckedCount(): Int {
         return mAllAlbum?.images?.count {
             it.isChecked

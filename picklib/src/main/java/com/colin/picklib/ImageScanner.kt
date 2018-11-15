@@ -46,7 +46,7 @@ fun Context.jumpActivity(clazz: Class<*>, args: Bundle? = null) {
 }
 
 
-class ImageScanner(var contextWrapper: ContextWrapper) {
+class ImageScanner(private var contextWrapper: ContextWrapper, var packageName: String) {
 
     fun getImageAlbum(): LiveData<MutableList<Album>> {
         val liveData = MutableLiveData<MutableList<Album>>()
@@ -55,7 +55,7 @@ class ImageScanner(var contextWrapper: ContextWrapper) {
             val albumKes: HashSet<String> = hashSetOf()
             val cursor = contextWrapper.contentResolver.query(EXTERNAL_IMAGES_URI,
                     ALBUM_PROJECTION, ALBUM_SELECTION, null, null)
-            val allAlbum = Album("所有图片")
+            val allAlbum = Album("ALL")
             albumList.add(allAlbum)
             var album: Album? = null
             var bucketId: String?
@@ -99,12 +99,12 @@ class ImageScanner(var contextWrapper: ContextWrapper) {
         // 下面这个crop=true是设置在开启的Intent中设置显示的VIEW可裁剪
         intent.putExtra("crop", "true")
         //该参数可以不设定用来规定裁剪区的宽高比
-        //        intent.putExtra("aspectX", 2);
-        //        intent.putExtra("aspectY", 1);
+        intent.putExtra("aspectX", 1)
+        intent.putExtra("aspectY", 1)
         //该参数设定为你的imageView的大小
-//        intent.putExtra("outputX", 600)
-//        intent.putExtra("outputY", 500)
-        intent.putExtra("scale", true)
+//        intent.putExtra("outputX", 800)
+//        intent.putExtra("outputY", 800)
+        intent.putExtra("scale", false)
         //是否返回bitmap对象
         intent.putExtra("return-data", false)
         //        intent.setData(outUri);
@@ -137,9 +137,9 @@ class ImageScanner(var contextWrapper: ContextWrapper) {
         return cf.absolutePath
     }
 
-    fun getUriFromFile(context: Context, file: File): Uri {
+    fun getUriFromFile(file: File): Uri {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-            FileProvider.getUriForFile(context, context.packageName + ".colin.cpp.FileProvider", file)
+            FileProvider.getUriForFile(contextWrapper, "$packageName.colin.picklib.FileProvider", file)
         else
             Uri.fromFile(file)
     }
